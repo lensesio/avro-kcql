@@ -152,7 +152,7 @@ the projected new schema is:
 ```
 
 There are scenarios where you might want to rename fields and maybe reorder them.
-By applying this SQL like syntax on the Pizza schem
+By applying this SQL like syntax on the Pizza schema
 
 ```
 SELECT 
@@ -216,6 +216,7 @@ rename the second instance (*name as renamedName*) the new schema will end up co
 ## How to use it
 
 ```scala
+import AvroKcql._
 val record: GenericRecord = {...}
 record.kcql("SELECT name, address.street.name as streetName FROM topic")
 ```
