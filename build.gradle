@@ -137,6 +137,11 @@ allprojects {
         from sourceSets.main.allSource
     }
 
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+
     task scaladocJar(type: Jar) {
         classifier = 'scaladoc'
         from '../LICENSE'
@@ -149,12 +154,14 @@ allprojects {
     }
 
     artifacts {
-        archives scaladocJar, sourcesJar
+        archives javadocJar, scaladocJar, sourcesJar
     }
 
     task compile(dependsOn: 'compileScala')
+    javadoc.dependsOn scaladoc
 
     signing {
+        required { gradle.taskGraph.hasTask("uploadArchives") }
         sign configurations.archives
     }
 
