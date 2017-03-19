@@ -68,7 +68,7 @@ allprojects {
         compile "io.confluent:kafka-avro-serializer:${confluentVersion}"
         provided "org.apache.kafka:kafka_$scalaMajorVersion:${kafkaVersion}"
         compile "com.sksamuel.avro4s:avro4s-core_$scalaMajorVersion:$avro4sVersion"
-        provided("com.datamountaineer:kcql:$kcqlVersion") {
+        compile("com.datamountaineer:kcql:$kcqlVersion") {
             exclude group: "com.google.guava", module: "guava"
         }
 
@@ -79,26 +79,6 @@ allprojects {
         testCompile "org.apache.curator:curator-test:3.1.0"
         testCompile 'org.powermock:powermock-module-junit4:1.6.5'
         testCompile 'org.pegdown:pegdown:1.1.0'
-
-        testCompile "io.confluent:kafka-schema-registry:$confluentVersion"
-        testCompile "io.confluent:kafka-schema-registry-client:$confluentVersion"
-        testCompile "org.apache.kafka:kafka-clients:kafkaVersion"
-        testCompile "io.confluent:kafka-avro-serializer:$confluentVersion"
-        testCompile "org.apache.avro:avro:$avroVersion"
-
-        testCompile "org.apache.kafka:kafka_${scalaMajorVersion}:$kafkaVersion"
-        testCompile "org.apache.kafka:kafka_${scalaMajorVersion}:${kafkaVersion}:test@jar"
-        testCompile "org.apache.kafka:kafka-streams:$kafkaVersion"
-
-        testCompile "org.apache.kafka:kafka-clients:${kafkaVersion}:test@jar"
-        testCompile "io.confluent:common-config:${confluentVersion}"
-        testCompile "io.confluent:common-utils:${confluentVersion}"
-        testCompile "io.confluent:rest-utils:${confluentVersion}"
-        testCompile "org.bouncycastle:bcpkix-jdk15on:${bouncyCastleVersion}"
-        testCompile("org.apache.directory.api:api-all:${apacheDirectoryApiVersion}"){
-            exclude group:"xml-apis",module:"xml-apis"
-            exclude group:"org.apache.directory.api", module:"api-ldap-schema-data"
-        }
     }
 
     jar {
