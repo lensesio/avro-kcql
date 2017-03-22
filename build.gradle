@@ -33,7 +33,7 @@ allprojects {
         scalaCheck = '1.11.1'
         scalaTest = '2.2.6'
         junitVersion = '4.12'
-        kcqlVersion = '2.0.8'
+        kcqlVersion = '2.0.10'
         kafkaVersion = '0.10.2.0'
         confluentVersion = '3.2.0'
         scalaLoggingVersion = '2.1.2'
