@@ -36,7 +36,7 @@ allprojects {
         kcqlVersion = '2.0.10'
         kafkaVersion = '0.10.2.0'
         confluentVersion = '3.2.0'
-        scalaLoggingVersion = '2.1.2'
+        scalaLoggingVersion = '3.5.0'
         mockitoVersion = '2.7.13'
         avroVersion = '1.8.1'
         avro4sVersion = "1.6.2"
@@ -62,7 +62,7 @@ allprojects {
     dependencies {
         compile "org.scala-lang:scala-library:$scala"
         compile "org.scala-lang:scala-compiler:$scala"
-        compile "com.typesafe.scala-logging:scala-logging-slf4j_$scalaMajorVersion:$scalaLoggingVersion"
+        compile "com.typesafe.scala-logging:scala-logging_$scalaMajorVersion:$scalaLoggingVersion"
 
         provided "org.apache.avro:avro:$avroVersion"
         compile "io.confluent:kafka-avro-serializer:${confluentVersion}"
