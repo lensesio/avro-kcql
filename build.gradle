@@ -29,7 +29,7 @@ allprojects {
 
     ext {
         scalaMajorVersion = '2.11'
-        scala = '2.11.7'
+        scala = '2.11.8'
         scalaCheck = '1.11.1'
         scalaTest = '2.2.6'
         junitVersion = '4.12'
@@ -61,7 +61,6 @@ allprojects {
 
     dependencies {
         compile "org.scala-lang:scala-library:$scala"
-        compile "org.scala-lang:scala-compiler:$scala"
         compile "com.typesafe.scala-logging:scala-logging_$scalaMajorVersion:$scalaLoggingVersion"
 
         provided "org.apache.avro:avro:$avroVersion"
