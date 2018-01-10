@@ -5,7 +5,7 @@ import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
 
 import scala.annotation.tailrec
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 object AvroSchemaKcql {
@@ -15,7 +15,7 @@ object AvroSchemaKcql {
       * This assumes a null, type union. probably better to look at the value and work out the schema
       */
     def fromUnion(): Schema = {
-      schema.getTypes.toList match {
+      schema.getTypes.asScala.toList match {
         case actualSchema +: Nil => actualSchema
         case List(n, actualSchema) if n.getType == Schema.Type.NULL => actualSchema
         case List(actualSchema, n) if n.getType == Schema.Type.NULL => actualSchema
@@ -27,7 +27,7 @@ object AvroSchemaKcql {
       def navigate(current: Schema, parents: Seq[String]): Seq[Field] = {
         if (Option(parents).isEmpty || parents.isEmpty) {
           current.getType match {
-            case Schema.Type.RECORD => current.getFields
+            case Schema.Type.RECORD => current.getFields.asScala
             case Schema.Type.UNION => navigate(current.fromUnion(), parents)
             case Schema.Type.MAP => throw new IllegalArgumentException(s"Can't select fields ${path.mkString(".")} since it resolved to a Map($current)")
             case _ => throw new IllegalArgumentException(s"Can't select fields ${path.mkString(".")} from schema:$current ")
@@ -53,11 +53,11 @@ object AvroSchemaKcql {
 
     def copy(kcql: Kcql): Schema = {
       if (kcql.hasRetainStructure) {
-        implicit val kcqlContext = new KcqlContext(kcql.getFields)
+        implicit val kcqlContext = new KcqlContext(kcql.getFields.asScala)
         copy
       }
       else {
-        flatten(kcql.getFields)
+        flatten(kcql.getFields.asScala)
       }
     }
 
@@ -94,10 +94,10 @@ object AvroSchemaKcql {
     def copyProperties(from: Schema): Schema = {
       from.getType match {
         case Schema.Type.RECORD | Schema.Type.FIXED | Schema.Type.ENUM =>
-          from.getAliases.foreach(schema.addAlias)
+          from.getAliases.asScala.foreach(schema.addAlias)
         case _ =>
       }
-      from.getObjectProps.foreach { case (prop: String, value: Any) =>
+      from.getObjectProps.asScala.foreach { case (prop: String, value: Any) =>
         schema.addProp(prop, value)
       }
       schema
@@ -106,12 +106,12 @@ object AvroSchemaKcql {
     private def createRecordSchemaForFlatten(fields: Seq[KcqlField]): Schema = {
       val newSchema = Schema.createRecord(schema.getName, schema.getDoc, schema.getNamespace, false)
       val fieldParentsMap = fields.foldLeft(Map.empty[String, ArrayBuffer[String]]) { case (map, f) =>
-        val key = Option(f.getParentFields).map(_.mkString(".")).getOrElse("")
+        val key = Option(f.getParentFields.asScala).map(_.mkString(".")).getOrElse("")
         val buffer = map.getOrElse(key, ArrayBuffer.empty[String])
         if (buffer.contains(f.getName)) {
           throw new IllegalArgumentException(s"You have defined the field ${
             if (f.hasParents) {
-              f.getParentFields.mkString(".") + "." + f.getName
+              f.getParentFields.asScala.mkString(".") + "." + f.getName
             } else {
               f.getName
             }
@@ -136,8 +136,8 @@ object AvroSchemaKcql {
       val newFields = fields.flatMap {
 
         case field if field.getName == "*" =>
-          val siblings = fieldParentsMap.get(Option(field.getParentFields).map(_.mkString(".")).getOrElse(""))
-          Option(field.getParentFields)
+          val siblings = fieldParentsMap.get(Option(field.getParentFields.asScala).map(_.mkString(".")).getOrElse(""))
+          Option(field.getParentFields.asScala)
             .map { p =>
               val s = schema.fromPath(p)
                 .headOption
@@ -151,7 +151,7 @@ object AvroSchemaKcql {
                   throw new IllegalArgumentException(s"Field selection ${p.mkString(".")} resolves to schema type:$other. Only RECORD type is allowed")
               }
             }.getOrElse(schema)
-            .getFields
+            .getFields.asScala
             .withFilter { f =>
               siblings.collect { case s if s.contains(f.name()) => false }.getOrElse(true)
             }
@@ -161,9 +161,9 @@ object AvroSchemaKcql {
             }
 
         case field if field.hasParents =>
-          schema.fromPath(field.getParentFields.toVector :+ field.getName)
+          schema.fromPath(field.getParentFields.asScala.toVector :+ field.getName)
             .map { extracted =>
-              require(extracted != null, s"Invalid field:${(field.getParentFields.toVector :+ field.getName).mkString(".")}")
+              require(extracted != null, s"Invalid field:${(field.getParentFields.asScala.toVector :+ field.getName).mkString(".")}")
               AvroSchemaExtension.checkAllowedSchemas(extracted.schema(), field)
               if (field.getAlias == "*") {
                 new Field(getNextFieldName(extracted.name()), extracted.schema(), extracted.doc(), extracted.defaultVal())
@@ -180,7 +180,7 @@ object AvroSchemaKcql {
       }
 
 
-      newSchema.setFields(newFields)
+      newSchema.setFields(newFields.asJava)
       newSchema.copyProperties(schema)
     }
   }
@@ -198,7 +198,7 @@ object AvroSchemaKcql {
           newSchema.copyProperties(from)
 
         case Schema.Type.UNION =>
-          val newSchema = Schema.createUnion(from.getTypes.map(copy(_, parents)))
+          val newSchema = Schema.createUnion((from.getTypes.asScala.map(copy(_, parents))).asJava)
           newSchema.copyProperties(from)
 
         case _ => from
@@ -211,25 +211,25 @@ object AvroSchemaKcql {
       val fields = kcqlContext.getFieldsForPath(parents)
       val newFields: Seq[Schema.Field] = fields match {
         case Seq() =>
-          from.getFields
+          from.getFields.asScala
             .map { schemaField =>
               val newSchema = copy(schemaField.schema(), parents :+ schemaField.name)
               val newField = new org.apache.avro.Schema.Field(schemaField.name, newSchema, schemaField.doc(), schemaField.defaultVal())
-              schemaField.aliases().foreach(newField.addAlias)
+              schemaField.aliases().asScala.foreach(newField.addAlias)
               newField
             }
 
         case Seq(Left(f)) if f.getName == "*" =>
-          from.getFields.map { schemaField =>
+          from.getFields.asScala.map { schemaField =>
             val newSchema = copy(schemaField.schema(), parents :+ schemaField.name)
             val newField = new org.apache.avro.Schema.Field(schemaField.name, newSchema, schemaField.doc(), schemaField.defaultVal())
-            schemaField.aliases().foreach(newField.addAlias)
+            schemaField.aliases().asScala.foreach(newField.addAlias)
             newField
           }
         case other =>
           fields.flatMap {
             case Left(field) if field.getName == "*" =>
-              from.getFields
+              from.getFields.asScala
                 .withFilter(f => !fields.exists(e => e.isLeft && e.left.get.getName == f.name))
                 .map { f =>
                   val newSchema = copy(f.schema(), parents :+ f.name)
@@ -256,7 +256,7 @@ object AvroSchemaKcql {
           }
       }
 
-      newSchema.setFields(newFields)
+      newSchema.setFields(newFields.asJava)
       newSchema.copyProperties(from)
     }
 
@@ -265,7 +265,7 @@ object AvroSchemaKcql {
         case Seq(field) if field == "*" =>
           from.getType match {
             case Schema.Type.UNION => fromPath(from.fromUnion(), path)
-            case Schema.Type.RECORD => from.getFields
+            case Schema.Type.RECORD => from.getFields.asScala
             case other => throw new IllegalArgumentException(s"Can't select field:$field from ${other.toString}")
           }
         case Seq(field) =>

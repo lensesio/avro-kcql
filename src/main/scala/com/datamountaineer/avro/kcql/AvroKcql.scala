@@ -9,7 +9,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericContainer, GenericData, IndexedRecord}
 import org.apache.avro.util.Utf8
 
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
@@ -38,12 +37,12 @@ object AvroKcql extends AvroFieldValueGetter {
           case other => throw new IllegalArgumentException(s"Avro type ${other.getClass.getName} is not supported")
         }
         if (query.hasRetainStructure) {
-          implicit val kcqlContext = new KcqlContext(query.getFields)
+          implicit val kcqlContext = new KcqlContext(query.getFields.asScala)
           val schema = from.getSchema.copy()
           kcql(schema)
         } else {
           implicit val fields = query.getFields.asScala
-          val schema = from.getSchema.flatten(query.getFields)
+          val schema = from.getSchema.flatten(query.getFields.asScala)
           kcqlFlatten(schema)
         }
       }
@@ -97,7 +96,7 @@ object AvroKcql extends AvroFieldValueGetter {
 
     def flattenIndexedRecord(record: IndexedRecord, newSchema: Schema)(implicit fields: Seq[KcqlField]): GenericContainer = {
       val fieldsParentMap = fields.foldLeft(Map.empty[String, ArrayBuffer[String]]) { case (map, f) =>
-        val key = Option(f.getParentFields).map(_.mkString(".")).getOrElse("")
+        val key = Option(f.getParentFields.asScala).map(_.mkString(".")).getOrElse("")
         val buffer = map.getOrElse(key, ArrayBuffer.empty[String])
         buffer += f.getName
         map + (key -> buffer)
@@ -107,7 +106,7 @@ object AvroKcql extends AvroFieldValueGetter {
       fields.foldLeft(0) { case (index, field) =>
         if (field.getName == "*") {
           val sourceFields = record.getSchema.getFields(Option(field.getParentFields).map(_.asScala).getOrElse(Seq.empty))
-          val key = Option(field.getParentFields).map(_.mkString(".")).getOrElse("")
+          val key = Option(field.getParentFields.asScala).map(_.mkString(".")).getOrElse("")
           sourceFields
             .filter { f =>
               fieldsParentMap.get(key).forall(!_.contains(f.name()))
@@ -141,7 +140,7 @@ object AvroKcql extends AvroFieldValueGetter {
                   parents: Seq[String])(implicit kcqlContext: KcqlContext): Any = {
       value match {
         case c: java.util.Collection[_] =>
-          c.foldLeft(new java.util.ArrayList[Any](c.size())) { (acc, e) =>
+          c.asScala.foldLeft(new java.util.ArrayList[Any](c.size())) { (acc, e) =>
             acc.add(from(e, schema.getElementType, targetSchema.getElementType, parents))
             acc
           }
@@ -161,7 +160,7 @@ object AvroKcql extends AvroFieldValueGetter {
           case Left(field) if field.getName == "*" =>
             val filteredFields = fields.collect { case Left(f) if f.getName != "*" => f.getName }.toSet
 
-            schema.getFields
+            schema.getFields.asScala
               .withFilter(f => !filteredFields.contains(f.name()))
               .map { f =>
                 val sourceField = Option(schema.getField(f.name))
@@ -189,10 +188,10 @@ object AvroKcql extends AvroFieldValueGetter {
 
         }
       }.getOrElse {
-        targetSchema.getFields
+        targetSchema.getFields.asScala
           .map { f =>
             val sourceField = Option(schema.getField(f.name))
-              .getOrElse(throw new IllegalArgumentException(s"Can't find the field ${f.name} in ${schema.getFields.map(_.name()).mkString(",")}"))
+              .getOrElse(throw new IllegalArgumentException(s"Can't find the field ${f.name} in ${schema.getFields.asScala.map(_.name()).mkString(",")}"))
             sourceField -> f
           }
       }
@@ -217,7 +216,7 @@ object AvroKcql extends AvroFieldValueGetter {
         val fields = kcqlContext.getFieldsForPath(parents)
         val initialMap = {
           if (fields.exists(f => f.isLeft && f.left.get.getName == "*")) {
-            map.keySet().map(k => k.toString -> k.toString).toMap
+            map.keySet().asScala.map(k => k.toString -> k.toString).toMap
           } else {
             Map.empty[String, String]
           }
@@ -230,8 +229,8 @@ object AvroKcql extends AvroFieldValueGetter {
               case (m, Right(f)) => m + (f -> f)
             }
         }
-          .getOrElse(map.keySet().map(k => k.toString -> k.toString).toMap)
-          .foreach { case (key, alias) =>
+          .getOrElse(map.keySet().asScala.map(k => k.toString -> k.toString).toMap)
+          .foreach { case (key, _) =>
             Option(map.get(key)).foreach { v =>
               newMap.put(
                 from(key, StringSchema, StringSchema, null).asInstanceOf[CharSequence],
