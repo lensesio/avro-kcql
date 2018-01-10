@@ -1,4 +1,5 @@
-
-/build/
-/.idea/
+# Created by .ignore support plugin (hsz.mobi)
 /.gradle/
+/.idea/
+/avro-kcql.iml
+/build/
