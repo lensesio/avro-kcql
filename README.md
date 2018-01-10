@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Landoop/avro-sql.svg?branch=master)](https://travis-ci.org/Landoop/avro-sql)
+
 # avro-kcql
 This is a small utility library allowing you to translate the shape of an Avro record.
 Let's say we have the following Avro Schema:
