@@ -2,7 +2,7 @@ package com.datamountaineer.avro.kcql
 
 import com.datamountaineer.kcql.{Field, Kcql}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 class KcqlContext(val fields: Seq[Field]) {
@@ -36,20 +36,20 @@ class KcqlContext(val fields: Seq[Field]) {
     def apply(fields: Seq[Field]): Map[String, Seq[Either[Field, String]]] = {
       fields.foldLeft(Map.empty[String, ArrayBuffer[Either[Field, String]]]) { case (map, field) =>
         if (field.hasParents) {
-          val (_, m) = field.getParentFields
+          val (_, m) = field.getParentFields.asScala
             .foldLeft((new StringBuilder(), map)) { case ((builder, accMap), p) =>
               val localMap = insertKey(builder.toString(), Right(p), accMap)
               if (builder.isEmpty) builder.append(p)
               builder.append(p) -> localMap
             }
-          insertKey(field.getParentFields.mkString("."), Left(field), m)
+          insertKey(field.getParentFields.asScala.mkString("."), Left(field), m)
         } else {
           insertKey("", Left(field), map)
         }
       }
     }
 
-    def apply(kcql: Kcql): Map[String, Seq[Either[Field, String]]] = apply(kcql.getFields)
+    def apply(kcql: Kcql): Map[String, Seq[Either[Field, String]]] = apply(kcql.getFields.asScala)
   }
 
 }
