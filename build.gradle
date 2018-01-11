@@ -17,7 +17,7 @@ apply plugin: 'io.codearte.nexus-staging'
 apply plugin: 'net.researchgate.release'
 
 allprojects {
-    group = 'com.datamountaineer'
+    group = 'com.landoop'
     version = version
     description = "Allows to run KCQL over an Avro record"
 
@@ -145,12 +145,12 @@ allprojects {
                         name project.name
                         description project.description
                         packaging 'jar'
-                        url 'https://github.com/datamountaineer/kafka-connect-common'
+                        url 'https://github.com/landoop/avro-kcql'
 
                         scm {
-                            connection 'scm:git:https://github.com/datamountaineer/kafka-connect-common.git'
-                            developerConnection 'scm:git:git@github.com:datamountaineer/kafka-connect-common.git'
-                            url 'https://github.com/datamountaineer/kafka-connect-common.git'
+                            connection 'scm:git:https://github.com/landoop/avro-kcql.git'
+                            developerConnection 'scm:git:git@github.com:landoop/avro-kcql.git'
+                            url 'https://github.com/landoop/avro-kcql.git'
                         }
 
                         licenses {
@@ -165,17 +165,17 @@ allprojects {
                             developer {
                                 id = 'andrewstevenson'
                                 name = 'Andrew Stevenson'
-                                email = 'andrew@datamountaineer.com'
+                                email = 'andrew@landoop.com'
                             }
                             developer {
                                 id = 'stheppi'
                                 name = 'Stefan Bocutiu'
-                                email = 'stefan@datamountaineer.com'
+                                email = 'stefan@landoop.com'
                             }
                             developer {
                                 id = 'Antwnis'
                                 name = 'Antonios Chalkiopoulos'
-                                email = 'antonios@datamountaineer.com'
+                                email = 'antonios@landoop.com'
                             }
                         }
                     }
